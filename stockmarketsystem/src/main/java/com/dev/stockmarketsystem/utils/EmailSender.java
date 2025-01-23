@@ -11,7 +11,7 @@ public class EmailSender {
     @Autowired
     private JavaMailSender mailSender;
 
-    private final String from = "20360859117@ogr.btu.edu.tr"; 
+    private final String from = ""; 
 
     public void sendEmail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -23,7 +23,7 @@ public class EmailSender {
     }
 
     public void sendTestEmail() {
-        sendEmail("anas.yusuf200112@gmail.com", "Test Email", "This is a test email from your application.");
+        sendEmail("", "Test Email", "This is a test email from your application.");
         System.out.println("Email sent successfully!");
     }
 }
