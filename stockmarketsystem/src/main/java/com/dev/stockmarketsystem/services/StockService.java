@@ -2,17 +2,27 @@ package com.dev.stockmarketsystem.services;
 
 import com.dev.stockmarketsystem.models.Stock;
 import com.dev.stockmarketsystem.repositories.StockRepository;
+import com.dev.stockmarketsystem.utils.EmailSender;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class StockService {
 
-    private final StockRepository stockRepository;
 
-    public StockService(StockRepository stockRepository) {
+    private final StockRepository stockRepository;
+    private final EmailSender emailSender;
+
+    public StockService(StockRepository stockRepository, EmailSender emailSender) {
         this.stockRepository = stockRepository;
+        this.emailSender = emailSender;
     }
 
     //Add new stock
@@ -82,5 +92,21 @@ public class StockService {
                 .orElseThrow(() -> new RuntimeException("Stock not found with ID: " + stockId));
         stock.setActive(isActive);
         return stockRepository.save(stock);
+    }
+    // Method to check stock price
+    public void checkStockPrice(String symbol, double thresholdPrice, String email) {
+        Optional<Stock> stockOptional = stockRepository.findBySymbol(symbol);
+
+        if (stockOptional.isPresent()) {
+            Stock stock = stockOptional.get();
+            if (stock.getPrice() > thresholdPrice) {
+                String subject = "Stock Price Alert for " + symbol;
+                String body = "The stock price of " + symbol + " has exceeded the threshold of " + thresholdPrice +
+                        ". Current price: " + stock.getPrice();
+                emailSender.sendEmail(email, subject, body);
+            }
+        } else {
+            throw new IllegalArgumentException("Stock not found with symbol: " + symbol);
+        }
     }
 }

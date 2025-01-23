@@ -4,11 +4,16 @@ import com.dev.stockmarketsystem.models.PriceHistory;
 import com.dev.stockmarketsystem.models.Stock;
 import com.dev.stockmarketsystem.services.AlphaVantageService;
 import com.dev.stockmarketsystem.services.StockService;
+import com.dev.stockmarketsystem.utils.EmailSender;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
 
 @RestController
@@ -19,18 +24,18 @@ public class StockController {
     @Autowired
     private AlphaVantageService alphaVantageService;
 
+    @Autowired
+    private EmailSender emailSender;
+
     public StockController(StockService stockService) {
         this.stockService = stockService;
     }
-
 
     @GetMapping("/update")
     public String updateStockData(@RequestParam List<String> symbols) {
         alphaVantageService.fetchAndSaveStocks(symbols);
         return "Stock data for symbols " + symbols + " has been updated!";
     }
-
-
 
     // Add a new stock
     @PostMapping("/add")
@@ -66,24 +71,28 @@ public class StockController {
         Stock stock = stockService.getStockById(id);
         return ResponseEntity.ok(stock);
     }
+
     //Get active stocks
     @GetMapping("/active")
     public ResponseEntity<List<Stock>> getActiveStocks() {
         List<Stock> activeStocks = stockService.getActiveStocks();
         return ResponseEntity.ok(activeStocks);
     }
+
     @PutMapping("/deactivate/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deactivateStock(@PathVariable Long id) {
         stockService.deactivateStock(id);
         return ResponseEntity.ok("Stock with ID " + id + " has been deactivated.");
     }
+
     @PutMapping("/{id}/toggle-active")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> toggleStockActive(@PathVariable Long id) {
         boolean isActive = stockService.toggleActiveStatus(id);
         return ResponseEntity.ok("Stock status updated. Active: " + isActive);
     }
+
     // Endpoint to update stock status
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')") // Ensure only admin can access this
@@ -92,9 +101,20 @@ public class StockController {
         return ResponseEntity.ok(updatedStock);
     }
 
+    // Endpoint to alert user if stock price exceeds threshold
+    @GetMapping("/alert")
+    public String checkStockPrice(
+            @RequestParam String symbol,
+            @RequestParam double thresholdPrice,
+            @RequestParam String email) {
+        stockService.checkStockPrice(symbol, thresholdPrice, email);
+        return "Price check initiated. You will receive an email if the threshold is exceeded.";
+    }
 
-
-
-
+    @GetMapping("/send-test-email")
+    public ResponseEntity<String> sendTestEmail() {
+        emailSender.sendTestEmail();
+        return ResponseEntity.ok("Test email sent successfully!");
+    }
 }
 

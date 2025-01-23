@@ -17,7 +17,7 @@ import java.util.List;
 @Service
 public class AlphaVantageService {
 
-    private final String API_KEY = "4599OR2R7CA8PNKH"; // Replace with your API key
+    private final String API_KEY = "GMKHUET4BGL108T4"; // Replace with your API key
     private final String BASE_URL = "https://www.alphavantage.co/query";
 
     @Autowired
